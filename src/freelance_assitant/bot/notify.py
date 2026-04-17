@@ -13,9 +13,9 @@ from freelance_assitant.domain.schemas import JobCandidateRead
 logger = logging.getLogger("fa.bot.notify")
 
 TIER_EMOJI = {
-    LeadTier.A: "\ud83c\udd70\ufe0f",
-    LeadTier.B: "\ud83c\udd71\ufe0f",
-    LeadTier.C: "\u24b8",
+    LeadTier.A: "🅰",
+    LeadTier.B: "🅱",
+    LeadTier.C: "©",
 }
 
 SOURCE_NAMES = {
@@ -28,71 +28,50 @@ SOURCE_NAMES = {
 
 
 def format_lead_message(candidate: JobCandidateRead) -> str:
-    """Format a lead notification message."""
-    tier_emoji = TIER_EMOJI.get(candidate.tier, "\u2753")
+    tier_emoji = TIER_EMOJI.get(candidate.tier, "❓")
     source_name = SOURCE_NAMES.get(candidate.source, candidate.source)
     score_str = f"{candidate.score:.2f}" if candidate.score else "?"
 
     lines = [
-        f"{tier_emoji} <b>{candidate.tier}-Lead</b> | {source_name} | Score: {score_str}",
+        f"{tier_emoji} <b>{candidate.tier}-лид</b> · {source_name} · score {score_str}",
         "",
-        f"\ud83d\udccb <b>{_escape_html(candidate.title)}</b>",
+        f"<b>{_esc(candidate.title)}</b>",
     ]
 
-    # Budget
     if candidate.budget_min or candidate.budget_max:
         bmin = f"{candidate.budget_min:,}" if candidate.budget_min else "?"
         bmax = f"{candidate.budget_max:,}" if candidate.budget_max else "?"
-        if bmin == bmax:
-            lines.append(f"\ud83d\udcb0 {bmin} \u20bd")
-        else:
-            lines.append(f"\ud83d\udcb0 {bmin} \u2014 {bmax} \u20bd")
+        budget_str = bmin if bmin == bmax else f"{bmin} — {bmax}"
+        lines.append(f"💰 {budget_str} ₽")
 
-    # Category
     if candidate.category:
-        lines.append(f"\ud83c\udff7 {_escape_html(candidate.category)}")
+        lines.append(f"🏷 {_esc(candidate.category)}")
 
-    # Description excerpt
     if candidate.description:
-        desc = candidate.description[:200]
-        if len(candidate.description) > 200:
+        desc = candidate.description[:300].strip()
+        if len(candidate.description) > 300:
             desc += "..."
-        lines.append(f"\n{_escape_html(desc)}")
+        lines.append(f"\n{_esc(desc)}")
 
     if candidate.score_details:
         details = candidate.score_details
-        summary_parts: list[str] = []
-        for key in (
-            "skill_fit",
-            "money_fit",
-            "fast_close_fit",
-            "source_fit",
-            "llm_advisory",
-            "llm_scope_clarity",
-            "llm_grey_risk",
-        ):
+        parts: list[str] = []
+        for key in ("skill_fit", "money_fit", "fast_close_fit", "llm_advisory"):
             val = details.get(key)
             if isinstance(val, float):
-                summary_parts.append(f"{key.replace('_fit', '').replace('_score', '')}: {val:.2f}")
-        if summary_parts:
-            lines.append(f"\n\ud83d\udcca {' | '.join(summary_parts)}")
+                label = key.replace("_fit", "").replace("llm_", "")
+                parts.append(f"{label}: {val:.2f}")
+        if parts:
+            lines.append(f"\n📊 {' · '.join(parts)}")
 
         enrich = details.get("decision_enrichment")
         if isinstance(enrich, dict):
-            lines.append("")
-            lines.append("<b>Decision</b>")
-            mode = enrich.get("recommended_mode")
-            complexity = enrich.get("execution_complexity")
-            if mode or complexity:
-                lines.append(
-                    f"mode: {_escape_html(str(mode or '—'))} | complexity: {_escape_html(str(complexity or '—'))}"
-                )
-            risks = enrich.get("blocking_risks") or []
-            if isinstance(risks, list) and risks:
-                lines.append(f"risks: {_escape_html(', '.join(str(r) for r in risks[:3]))}")
             brief = str(enrich.get("agent_brief") or "").strip()
             if brief:
-                lines.append(_escape_html(brief[:220] + ("..." if len(brief) > 220 else "")))
+                lines.append(f"\n💡 {_esc(brief[:250])}")
+            risks = enrich.get("blocking_risks") or []
+            if isinstance(risks, list) and risks:
+                lines.append(f"⚠️ {_esc(', '.join(str(r) for r in risks[:2]))}")
 
     return "\n".join(lines)
 
@@ -102,7 +81,6 @@ async def send_lead_notification(
     owner_id: int,
     candidate: JobCandidateRead,
 ) -> int | None:
-    """Send a lead notification to the owner. Returns message_id or None."""
     try:
         text = format_lead_message(candidate)
         kb = lead_keyboard(str(candidate.id), candidate.source_url)
@@ -120,5 +98,5 @@ async def send_lead_notification(
         return None
 
 
-def _escape_html(text: str) -> str:
+def _esc(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

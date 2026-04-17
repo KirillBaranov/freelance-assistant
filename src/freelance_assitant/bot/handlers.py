@@ -8,7 +8,8 @@ import uuid
 from aiogram import Bot, Router
 from aiogram.types import CallbackQuery
 
-from freelance_assitant.bot.keyboard import proposal_keyboard, status_keyboard
+from freelance_assitant.bot.keyboard import pipeline_lead_keyboard, proposal_keyboard, status_keyboard
+from freelance_assitant.bot.notify import format_lead_message
 from freelance_assitant.config import settings
 from freelance_assitant.domain.enums import JobStatus
 from freelance_assitant.storage.database import async_session_factory
@@ -141,7 +142,7 @@ async def handle_won(callback: CallbackQuery) -> None:
         repo = JobCandidateRepo(session)
         await repo.update_status(candidate_id, JobStatus.WON)
 
-    await callback.answer("\ud83c\udfc6 Победа!")
+    await callback.answer("🏆 Победа!")
     if callback.message:
         await callback.message.edit_reply_markup(reply_markup=None)
 
@@ -159,6 +160,28 @@ async def handle_lost(callback: CallbackQuery) -> None:
     await callback.answer("Отмечено: проиграл")
     if callback.message:
         await callback.message.edit_reply_markup(reply_markup=None)
+
+
+@router.callback_query(lambda c: c.data == "open_leads")
+async def handle_open_leads(callback: CallbackQuery) -> None:
+    await callback.answer()
+    async with async_session_factory() as session:
+        repo = JobCandidateRepo(session)
+        leads = await repo.get_by_status(JobStatus.SHORTLISTED, limit=5)
+
+    if not leads:
+        await callback.message.answer("Нет лидов в shortlist.")
+        return
+
+    for lead in leads:
+        text = format_lead_message(lead)
+        kb = pipeline_lead_keyboard(str(lead.id), lead.source_url)
+        await callback.message.answer(
+            text,
+            reply_markup=kb,
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+        )
 
 
 def _extract_id(data: str | None) -> uuid.UUID | None:

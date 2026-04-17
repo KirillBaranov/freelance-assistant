@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,14 +34,20 @@ class JobCandidateRepo:
         await self.session.commit()
         return new_count
 
+    async def count_by_status(self, status: JobStatus | str) -> int:
+        stmt = select(func.count()).select_from(JobCandidate).where(JobCandidate.status == status)
+        result = await self.session.execute(stmt)
+        return result.scalar() or 0
+
     async def get_by_status(
-        self, status: JobStatus | str, limit: int = 50
+        self, status: JobStatus | str, limit: int = 50, offset: int = 0
     ) -> list[JobCandidateRead]:
         stmt = (
             select(JobCandidate)
             .where(JobCandidate.status == status)
-            .order_by(JobCandidate.created_at.desc())
+            .order_by(JobCandidate.score.desc(), JobCandidate.created_at.desc())
             .limit(limit)
+            .offset(offset)
         )
         result = await self.session.execute(stmt)
         rows = result.scalars().all()
