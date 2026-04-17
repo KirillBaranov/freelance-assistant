@@ -2,8 +2,6 @@
 
 Personal lead-generation system. Monitors Russian freelance platforms, scores jobs, generates proposal drafts, and pushes A-leads to Telegram.
 
-**Target:** 5k RUB/day floor.
-
 ---
 
 ## What it does
