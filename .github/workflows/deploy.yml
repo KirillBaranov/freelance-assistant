@@ -30,6 +30,15 @@ jobs:
           docker build -t $IMAGE .
           docker push $IMAGE
 
+      - name: Write compose file to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: docker-compose.prod.yml
+          target: ~/freelance-assistant/
+
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1
         with:
@@ -37,8 +46,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd ~/freelance-assistant
+            set -e
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u kirillbaranov --password-stdin
+            cd ~/freelance-assistant
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
             docker compose -f docker-compose.prod.yml exec -T app fa migrate
