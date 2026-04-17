@@ -1,0 +1,18 @@
+title: "Telegram-боты"
+problem: "Автоматизация бизнес-процессов через Telegram"
+solution: "Разработка ботов на aiogram 3 + PostgreSQL + Redis"
+outcome: "15+ ботов в продакшене, от простых нотификаций до полноценных CRM"
+stack:
+  - python
+  - aiogram
+  - postgresql
+  - redis
+  - docker
+domain:
+  - ecommerce
+  - crm
+  - automation
+project_type: "бот"
+proof_points:
+  - "Бот-агрегатор заказов с интеграцией в 1С (5000+ пользователей)"
+  - "Бот для автоматизации HR-процессов"

@@ -1,0 +1,23 @@
+# Scoring engine configuration
+weights:
+  skill_fit: 0.35
+  money_fit: 0.30
+  fast_close_fit: 0.20
+  source_fit: 0.15
+  risk_score: 0.15  # subtracted from total
+
+thresholds:
+  a_lead: 0.62
+  b_lead: 0.40
+  # below b_lead = C tier
+
+# LLM scoring is applied only to candidates scoring above this
+# (saves tokens — don't LLM-score obvious C-tier)
+llm_score_min_threshold: 0.40
+llm_blend_weight: 0.35
+
+shortlist_score_threshold: 0.58
+shortlist_scope_threshold: 0.60
+shortlist_grey_risk_max: 0.30
+hard_reject_llm_max: 0.20
+hard_reject_grey_risk: 0.70

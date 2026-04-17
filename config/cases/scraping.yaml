@@ -1,0 +1,18 @@
+title: "Парсинг и скрапинг"
+problem: "Сбор данных с сайтов, API, marketplace"
+solution: "httpx/aiohttp + BeautifulSoup/lxml, Playwright для SPA"
+outcome: "50+ парсеров, от простых RSS до Playwright-автоматизации"
+stack:
+  - python
+  - httpx
+  - beautifulsoup
+  - playwright
+  - postgresql
+domain:
+  - ecommerce
+  - analytics
+  - monitoring
+project_type: "парсер"
+proof_points:
+  - "Мониторинг цен конкурентов для маркетплейса (10k+ товаров/день)"
+  - "Парсер вакансий с 5 площадок + дедупликация"

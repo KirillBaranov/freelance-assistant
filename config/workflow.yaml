@@ -1,0 +1,39 @@
+# Workflow state machine transitions
+# Format: from_status -> [allowed_to_statuses]
+transitions:
+  new:
+    - shortlisted
+    - archived
+  shortlisted:
+    - draft_ready
+    - archived
+  draft_ready:
+    - approved
+    - shortlisted
+    - archived
+  approved:
+    - applied
+    - archived
+  applied:
+    - client_replied
+    - followup_due
+    - lost
+    - archived
+  client_replied:
+    - won
+    - lost
+    - followup_due
+  followup_due:
+    - client_replied
+    - lost
+    - archived
+  won: []
+  lost: []
+  archived:
+    - new  # reactivation
+
+# Follow-up settings
+followup:
+  first_reminder_hours: 48
+  second_reminder_hours: 96
+  max_reminders: 2

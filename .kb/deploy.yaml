@@ -1,0 +1,17 @@
+registry: ghcr.io/kirillbaranov
+
+targets:
+  freelance-assistant:
+    path: .
+    dockerfile: Dockerfile
+    host: vps-1  # замени на hostname/IP своего VPS
+    compose: docker-compose.prod.yml
+    health: http://localhost:8000/health
+
+infrastructure:
+  postgres:
+    host: vps-1
+    image: postgres:16-alpine
+  redis:
+    host: vps-1
+    image: redis:7-alpine

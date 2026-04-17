@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — FA Admin{% endblock %}
+{% block content %}
+<h2 style="margin-bottom: 20px;">Dashboard</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="value">{{ stats.total_today }}</div>
+        <div class="label">Leads Today</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" style="color: #4ade80;">{{ stats.a_today }}</div>
+        <div class="label">A-Leads</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" style="color: #facc15;">{{ stats.b_today }}</div>
+        <div class="label">B-Leads</div>
+    </div>
+    <div class="stat-card">
+        <div class="value">{{ stats.applied }}</div>
+        <div class="label">Applied</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" style="color: #4ade80;">{{ stats.won_today }}</div>
+        <div class="label">Won Today</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" style="color: #4ade80;">{{ "{:,}".format(stats.earnings) }} ₽</div>
+        <div class="label">Earnings Today</div>
+        <div class="progress-bar" style="margin-top: 8px;">
+            <div class="fill" style="width: {{ [stats.earnings / 5000 * 100, 100] | min }}%;"></div>
+        </div>
+        <div class="label">Target: 5,000 ₽</div>
+    </div>
+</div>
+
+<h3 style="margin-bottom: 12px;">Latest Ingest</h3>
+<div class="ingest-grid">
+    {% for item in ingest_stats %}
+    <div class="ingest-card">
+        <h4>{{ item.source }}</h4>
+        <div class="ingest-meta">{{ item.recorded_at or '—' }}</div>
+        <div class="ingest-row"><span>Fetched</span><strong>{{ item.fetched }}</strong></div>
+        <div class="ingest-row"><span>New Candidates</span><strong>{{ item.new }}</strong></div>
+        <div class="ingest-row"><span>Inserted</span><strong>{{ item.inserted_new or 0 }}</strong></div>
+        <div class="ingest-row"><span>Skipped Known</span><strong>{{ item.skipped_known }}</strong></div>
+        <div class="ingest-row"><span>Not Modified</span><strong>{{ item.not_modified }}</strong></div>
+        <div class="ingest-scopes">
+            {% for scope in item.scopes %}
+            <div class="ingest-scope">
+                <span>{{ scope.label }}</span>
+                <span>f={{ scope.fetched }}</span>
+                <span>n={{ scope.new }}</span>
+                <span>s={{ scope.skipped_known + scope.not_modified }}</span>
+            </div>
+            {% endfor %}
+            {% if not item.scopes %}
+            <div class="muted">No scope-level stats yet</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% if not ingest_stats %}
+    <div class="muted">No ingest stats yet. Run `fa ingest` or wait for the worker cron.</div>
+    {% endif %}
+</div>
+
+<h3 style="margin-bottom: 12px;">Recent A-Leads</h3>
+{% if not leads %}
+<div class="empty-state">No A-leads yet.</div>
+{% else %}
+<div class="cards">
+    {% for c in leads %}
+    <div class="job-card">
+        <div class="job-card-head">
+            <div>
+                <div class="job-card-title"><a href="/admin/jobs/{{ c.id }}">{{ c.title }}</a></div>
+                <div class="job-card-meta">
+                    <span class="chip">{{ c.source_label }}</span>
+                    <span class="chip chip-good">A</span>
+                    <span class="chip">score {{ "%.2f"|format(c.score or 0) }}</span>
+                    {% if c.source_quality == 'high' %}<span class="chip chip-good">source high</span>{% endif %}
+                    {% if c.recommended_mode %}<span class="chip">{{ c.recommended_mode }}</span>{% endif %}
+                    {% if c.execution_complexity %}<span class="chip">{{ c.execution_complexity }}</span>{% endif %}
+                </div>
+            </div>
+            <div style="text-align: right; min-width: 140px;">
+                <div style="font-size: 18px; font-weight: 700;">{{ c.budget_label }}</div>
+                <div class="muted">{{ c.created_at.strftime('%d.%m %H:%M') if c.created_at else '—' }}</div>
+            </div>
+        </div>
+        {% if c.description %}
+        <div class="job-card-desc">{{ c.description }}</div>
+        {% endif %}
+        <div class="job-grid" style="margin-top: 12px;">
+            <div class="job-panel">
+                <h4>Why Now</h4>
+                <div class="mini-list">
+                    {% if c.llm_advisory is not none %}<div><strong>fit:</strong> {{ "%.2f"|format(c.llm_advisory) }}</div>{% endif %}
+                    {% if c.llm_scope_clarity is not none %}<div><strong>clarity:</strong> {{ "%.2f"|format(c.llm_scope_clarity) }}</div>{% endif %}
+                    {% if c.what_to_offer %}<div><strong>offer:</strong> {{ c.what_to_offer }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="job-panel">
+                <h4>Risks</h4>
+                <p>{% if c.blocking_risks %}{{ c.blocking_risks|join(', ') }}{% else %}No explicit blockers yet{% endif %}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

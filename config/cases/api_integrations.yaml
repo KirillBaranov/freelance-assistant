@@ -1,0 +1,18 @@
+title: "API-интеграции"
+problem: "Связать разнородные системы через REST/GraphQL/WebSocket API"
+solution: "FastAPI + httpx, async пайплайны, webhook-обработчики"
+outcome: "Интеграции с CRM, платёжными системами, мессенджерами"
+stack:
+  - python
+  - fastapi
+  - httpx
+  - postgresql
+  - redis
+domain:
+  - fintech
+  - saas
+  - automation
+project_type: "интеграция"
+proof_points:
+  - "Интеграция Bitrix24 + AmoCRM + Telegram для отдела продаж"
+  - "Webhook-агрегатор для обработки 1000+ событий/мин"

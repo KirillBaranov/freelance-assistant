@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}All Jobs — FA Admin{% endblock %}
+{% block content %}
+<h2 style="margin-bottom: 16px;">All Jobs</h2>
+
+<div class="filters">
+    <a href="/admin/jobs" {% if not filter_tier and not filter_status and not filter_source %}class="active"{% endif %}>All</a>
+    <a href="/admin/jobs?status=shortlisted" {% if filter_status == 'shortlisted' %}class="active"{% endif %}>Shortlist</a>
+    <a href="/admin/jobs?tier=A" {% if filter_tier == 'A' %}class="active"{% endif %}>A-Leads</a>
+    <a href="/admin/jobs?tier=B" {% if filter_tier == 'B' %}class="active"{% endif %}>B-Leads</a>
+    <a href="/admin/jobs?tier=C" {% if filter_tier == 'C' %}class="active"{% endif %}>C-Leads</a>
+    |
+    <a href="/admin/jobs?source=fl_ru" {% if filter_source == 'fl_ru' %}class="active"{% endif %}>FL.ru</a>
+    <a href="/admin/jobs?source=kwork" {% if filter_source == 'kwork' %}class="active"{% endif %}>Kwork</a>
+    <a href="/admin/jobs?source=workspace" {% if filter_source == 'workspace' %}class="active"{% endif %}>Workspace</a>
+    <a href="/admin/jobs?source=telegram" {% if filter_source == 'telegram' %}class="active"{% endif %}>Telegram</a>
+</div>
+
+{% if not candidates %}
+<div class="empty-state">No leads matched the current filter.</div>
+{% else %}
+<div class="cards">
+    {% for c in candidates %}
+    <div class="job-card">
+        <div class="job-card-head">
+            <div>
+                <div class="job-card-title"><a href="/admin/jobs/{{ c.id }}">{{ c.title }}</a></div>
+                <div class="job-card-meta">
+                    <span class="chip">{{ c.source_label }}</span>
+                    {% if c.tier == 'A' %}<span class="chip chip-good">A</span>
+                    {% elif c.tier == 'B' %}<span class="chip chip-warn">B</span>
+                    {% elif c.tier == 'C' %}<span class="chip chip-bad">C</span>
+                    {% else %}<span class="chip">Unscored</span>{% endif %}
+                    <span class="chip">score {{ "%.2f"|format(c.score or 0) }}</span>
+                    <span class="chip">{{ c.status }}</span>
+                    {% if c.source_quality == 'high' %}<span class="chip chip-good">source high</span>
+                    {% elif c.source_quality == 'medium' %}<span class="chip chip-warn">source medium</span>
+                    {% elif c.source_quality %}<span class="chip">source {{ c.source_quality }}</span>{% endif %}
+                    {% if c.shortlist_fit %}<span class="chip chip-good">shortlist</span>{% endif %}
+                    {% if c.hard_reject %}<span class="chip chip-bad">hard reject</span>{% endif %}
+                    {% if c.recommended_mode %}<span class="chip">{{ c.recommended_mode }}</span>{% endif %}
+                    {% if c.execution_complexity == 'low' %}<span class="chip chip-good">complexity low</span>
+                    {% elif c.execution_complexity == 'medium' %}<span class="chip chip-warn">complexity medium</span>
+                    {% elif c.execution_complexity == 'high' %}<span class="chip chip-bad">complexity high</span>{% endif %}
+                    {% if c.needs_refresh %}<span class="chip chip-warn">needs rescore</span>{% endif %}
+                </div>
+            </div>
+            <div style="text-align: right; min-width: 140px;">
+                <div style="font-size: 18px; font-weight: 700;">{{ c.budget_label }}</div>
+                <div class="muted">{{ c.created_at.strftime('%d.%m %H:%M') if c.created_at else '—' }}</div>
+            </div>
+        </div>
+
+        {% if c.description %}
+        <div class="job-card-desc">{{ c.description }}</div>
+        {% endif %}
+
+        <div class="job-card-body">
+            <div class="job-grid">
+                <div class="job-panel">
+                    <h4>Source</h4>
+                    <div class="mini-list">
+                        {% if c.category %}<div><strong>category:</strong> {{ c.category }}</div>{% endif %}
+                        {% if c.category_hint %}<div><strong>hint:</strong> {{ c.category_hint }}</div>{% endif %}
+                        {% if c.feed_label %}<div><strong>feed:</strong> {{ c.feed_label }}</div>{% endif %}
+                        {% if c.matched_feeds %}<div><strong>matched:</strong> {{ c.matched_feeds|join(', ') }}</div>{% endif %}
+                        {% if c.client_name %}<div><strong>client:</strong> {{ c.client_name }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="job-panel">
+                    <h4>Scoring</h4>
+                    <div class="mini-list">
+                        {% if c.llm_advisory is not none %}<div><strong>fit:</strong> {{ "%.2f"|format(c.llm_advisory) }}</div>{% endif %}
+                        {% if c.llm_scope_clarity is not none %}<div><strong>scope clarity:</strong> {{ "%.2f"|format(c.llm_scope_clarity) }}</div>{% endif %}
+                        {% if c.delivery_risk is not none %}<div><strong>delivery risk:</strong> {{ "%.2f"|format(c.delivery_risk) }}</div>{% endif %}
+                        {% if c.llm_grey_risk is not none %}<div><strong>grey risk:</strong> {{ "%.2f"|format(c.llm_grey_risk) }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="job-panel">
+                    <h4>Decision</h4>
+                    <div class="mini-list">
+                        {% if c.reply_strategy %}<div><strong>reply:</strong> {{ c.reply_strategy }}</div>{% endif %}
+                        {% if c.what_to_offer %}<div><strong>offer:</strong> {{ c.what_to_offer }}</div>{% endif %}
+                        {% if c.first_milestone %}<div><strong>milestone:</strong> {{ c.first_milestone }}</div>{% endif %}
+                        {% if c.blocking_risks %}<div><strong>risks:</strong> {{ c.blocking_risks|join(', ') }}</div>{% endif %}
+                        {% if not c.has_decision and not c.needs_refresh %}<div>No decision enrichment yet.</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if c.agent_brief %}
+            <div class="job-panel">
+                <h4>Agent Brief</h4>
+                <p>{{ c.agent_brief }}</p>
+                {% if c.agent_check_prompt %}
+                <div class="button-row">
+                    <button class="action-btn" onclick="sendToAgent('{{ c.id }}', 'agent-status-{{ c.id }}')">Send To Agent</button>
+                    <button class="action-btn" onclick='copyText({{ c.agent_check_prompt|tojson }})'>Copy Agent Prompt</button>
+                </div>
+                <div class="inline-status" id="agent-status-{{ c.id }}"></div>
+                {% endif %}
+            </div>
+            {% elif c.llm_reasoning %}
+            <div class="job-panel">
+                <h4>LLM Reasoning</h4>
+                <p>{{ c.llm_reasoning }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

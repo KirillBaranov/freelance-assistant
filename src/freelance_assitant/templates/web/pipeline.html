@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Pipeline — FA Admin{% endblock %}
+{% block content %}
+<h2 style="margin-bottom: 20px;">Active Pipeline</h2>
+
+{% if not candidates %}
+<div class="empty-state">Pipeline is empty.</div>
+{% else %}
+<div class="cards">
+    {% for c in candidates %}
+    <div class="job-card">
+        <div class="job-card-head">
+            <div>
+                <div class="job-card-title"><a href="/admin/jobs/{{ c.id }}">{{ c.title }}</a></div>
+                <div class="job-card-meta">
+                    <span class="chip">{{ c.source_label }}</span>
+                    <span class="chip">{{ c.status }}</span>
+                    {% if c.tier == 'A' %}<span class="chip chip-good">A</span>
+                    {% elif c.tier == 'B' %}<span class="chip chip-warn">B</span>
+                    {% elif c.tier == 'C' %}<span class="chip chip-bad">C</span>{% endif %}
+                    <span class="chip">score {{ "%.2f"|format(c.score or 0) }}</span>
+                    {% if c.recommended_mode %}<span class="chip">{{ c.recommended_mode }}</span>{% endif %}
+                </div>
+            </div>
+            <div style="text-align: right; min-width: 140px;">
+                <div style="font-size: 18px; font-weight: 700;">{{ c.budget_label }}</div>
+                <div class="muted">{{ c.updated_at.strftime('%d.%m %H:%M') if c.updated_at else '—' }}</div>
+            </div>
+        </div>
+        {% if c.description %}
+        <div class="job-card-desc">{{ c.description }}</div>
+        {% endif %}
+        <div class="job-grid" style="margin-top: 12px;">
+            <div class="job-panel">
+                <h4>Action</h4>
+                <div class="mini-list">
+                    {% if c.reply_strategy %}<div><strong>reply:</strong> {{ c.reply_strategy }}</div>{% endif %}
+                    {% if c.what_to_offer %}<div><strong>offer:</strong> {{ c.what_to_offer }}</div>{% endif %}
+                    {% if c.first_milestone %}<div><strong>milestone:</strong> {{ c.first_milestone }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="job-panel">
+                <h4>Risks</h4>
+                <p>{% if c.blocking_risks %}{{ c.blocking_risks|join(', ') }}{% else %}No explicit blockers yet{% endif %}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

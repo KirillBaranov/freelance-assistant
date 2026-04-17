@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}{{ c.title[:40] }} — FA Admin{% endblock %}
+{% block content %}
+<p style="margin-bottom: 8px;"><a href="/admin/jobs">&larr; Back to jobs</a></p>
+
+<h2 style="margin-bottom: 20px;">{{ c.title }}</h2>
+
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));">
+    <div class="stat-card">
+        <div class="value" style="font-size: 18px;">{{ c.source }}</div>
+        <div class="label">Source</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" style="font-size: 18px;">
+            {% if c.tier == 'A' %}<span style="color: #4ade80;">A</span>
+            {% elif c.tier == 'B' %}<span style="color: #facc15;">B</span>
+            {% elif c.tier == 'C' %}<span style="color: #f87171;">C</span>
+            {% else %}—{% endif %}
+        </div>
+        <div class="label">Tier</div>
+    </div>
+    <div class="stat-card">
+        <div class="value score" style="font-size: 18px;">{{ "%.3f"|format(c.score or 0) }}</div>
+        <div class="label">Score</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" style="font-size: 18px;">{% if c.budget_max %}{{ "{:,}".format(c.budget_max) }} ₽{% else %}—{% endif %}</div>
+        <div class="label">Budget</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" style="font-size: 18px;"><span class="badge badge-status">{{ c.status }}</span></div>
+        <div class="label">Status</div>
+    </div>
+</div>
+
+{% if c.score_details and c.score_details.get('shortlist_fit') %}
+<div class="detail-section">
+    <h3>Shortlist Decision</h3>
+    <p>This lead passed the shortlist rules and should be treated as actionable.</p>
+    {% if c.score_details.get('llm_reasoning') %}
+    <p style="margin-top: 8px; color: #bbb;">{{ c.score_details.get('llm_reasoning') }}</p>
+    {% endif %}
+</div>
+{% elif c.score_details and c.score_details.get('hard_reject') %}
+<div class="detail-section">
+    <h3>Rejected By LLM Rules</h3>
+    <p>This lead was rejected by the LLM-based shortlist policy.</p>
+    {% if c.score_details.get('llm_reject_reasons') %}
+    <p style="margin-top: 8px; color: #f87171;">{{ c.score_details.get('llm_reject_reasons')|join(', ') }}</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if c.score_details and c.score_details.get('decision_enrichment') %}
+{% set enrich = c.score_details.get('decision_enrichment') %}
+<div class="detail-section">
+    <h3>Decision Brief</h3>
+    <table>
+        <tbody>
+            <tr><td>Deliverable Type</td><td>{{ enrich.get('deliverable_type') }}</td></tr>
+            <tr><td>Scope Size</td><td>{{ enrich.get('scope_size') }}</td></tr>
+            <tr><td>Repeatability</td><td>{{ enrich.get('repeatability_fit') }}</td></tr>
+            <tr><td>Manual Load Risk</td><td>{{ enrich.get('manual_load_risk') }}</td></tr>
+            <tr><td>Execution Complexity</td><td>{{ enrich.get('execution_complexity') }}</td></tr>
+            <tr><td>Compliance Risk</td><td>{{ enrich.get('compliance_risk') }}</td></tr>
+            <tr><td>Failure Cost</td><td>{{ enrich.get('failure_cost') }}</td></tr>
+            <tr><td>Recommended Mode</td><td>{{ enrich.get('recommended_mode') }}</td></tr>
+            <tr><td>Reply Strategy</td><td>{{ enrich.get('reply_strategy') }}</td></tr>
+        </tbody>
+    </table>
+    {% if enrich.get('scope_clarity_reason') %}
+    <p style="margin-top: 12px;"><b>Scope:</b> {{ enrich.get('scope_clarity_reason') }}</p>
+    {% endif %}
+    {% if enrich.get('complexity_reason') %}
+    <p style="margin-top: 8px;"><b>Complexity:</b> {{ enrich.get('complexity_reason') }}</p>
+    {% endif %}
+    {% if enrich.get('blocking_risks') %}
+    <p style="margin-top: 8px;"><b>Blocking Risks:</b> {{ enrich.get('blocking_risks')|join(', ') }}</p>
+    {% endif %}
+    {% if enrich.get('what_to_offer') %}
+    <p style="margin-top: 8px;"><b>What To Offer:</b> {{ enrich.get('what_to_offer') }}</p>
+    {% endif %}
+    {% if enrich.get('first_milestone') %}
+    <p style="margin-top: 8px;"><b>First Milestone:</b> {{ enrich.get('first_milestone') }}</p>
+    {% endif %}
+    {% if enrich.get('questions_to_client') %}
+    <p style="margin-top: 8px;"><b>Questions To Client:</b></p>
+    <ul style="margin: 6px 0 0 20px;">
+        {% for question in enrich.get('questions_to_client') %}
+        <li>{{ question }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% if enrich.get('agent_brief') %}
+    <p style="margin-top: 8px;"><b>Agent Brief:</b> {{ enrich.get('agent_brief') }}</p>
+    {% endif %}
+    {% if enrich.get('agent_check_prompt') %}
+    <div class="button-row">
+        <button
+            class="action-btn"
+            onclick="sendToAgent('{{ c.id }}', 'agent-detail-status')">
+            Send To Agent
+        </button>
+        <button
+            class="action-btn"
+            onclick='copyText({{ enrich.get("agent_check_prompt")|tojson }})'>
+            Copy Agent Prompt
+        </button>
+    </div>
+    <div class="inline-status" id="agent-detail-status"></div>
+    <div class="code-block">{{ enrich.get('agent_check_prompt') }}</div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="detail-section">
+    <h3>Description</h3>
+    <p>{{ c.description or 'No description' }}</p>
+    {% if c.category %}<p style="margin-top: 8px; color: #888;">Category: {{ c.category }}</p>{% endif %}
+    <p style="margin-top: 8px;"><a href="{{ c.source_url }}" target="_blank">Open on platform &rarr;</a></p>
+</div>
+
+{% if c.score_details %}
+<div class="detail-section">
+    <h3>Score Breakdown</h3>
+    <table>
+        <tbody>
+            {% for key, val in c.score_details.items() %}
+            <tr>
+                <td>{{ key }}</td>
+                <td class="score">{{ "%.3f"|format(val) if val is number else val }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if c.proposal_draft %}
+<div class="detail-section">
+    <h3>Proposal Draft</h3>
+    <div class="draft-text">{{ c.proposal_draft }}</div>
+</div>
+{% endif %}
+
+<div class="detail-section" style="color: #666; font-size: 13px;">
+    <p>ID: {{ c.id }}</p>
+    <p>Created: {{ c.created_at.strftime('%d.%m.%Y %H:%M:%S') if c.created_at else '—' }}</p>
+    <p>Updated: {{ c.updated_at.strftime('%d.%m.%Y %H:%M:%S') if c.updated_at else '—' }}</p>
+    {% if c.client_name %}<p>Client: {{ c.client_name }}</p>{% endif %}
+</div>
+{% endblock %}

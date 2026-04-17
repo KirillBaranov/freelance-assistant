@@ -1,0 +1,133 @@
+# Source configuration
+sources:
+  fl_ru:
+    enabled: true
+    poll_seconds: 180
+    feeds:
+      - url: "https://www.fl.ru/rss/?category=5"
+        label: "programming"
+        category_hint: "Программирование"
+        source_quality: "high"
+        source_bucket: "programming_feed"
+        enabled: true
+      - url: "https://www.fl.ru/rss/?category=41"
+        label: "business-automation"
+        category_hint: "Автоматизация бизнеса"
+        source_quality: "high"
+        source_bucket: "programming_feed"
+        enabled: true
+      - url: "https://www.fl.ru/rss/?category=34"
+        label: "messengers"
+        category_hint: "Мессенджеры"
+        source_quality: "medium"
+        source_bucket: "programming_feed"
+        enabled: true
+      - url: "https://www.fl.ru/rss/?category=31"
+        label: "ai"
+        category_hint: "AI — искусственный интеллект"
+        source_quality: "medium"
+        source_bucket: "programming_feed"
+        enabled: true
+      - url: "https://www.fl.ru/rss/all.xml"
+        label: "all"
+        category_hint: "Общий поток"
+        source_quality: "low"
+        source_bucket: "broad_feed"
+        enabled: false
+
+  kwork:
+    enabled: true
+    poll_seconds: 300
+    categories:
+      - id: 41
+        label: "Программирование"
+        source_quality: "high"
+        source_bucket: "programming_marketplace"
+        enabled: true
+      - id: 79
+        label: "Боты и чат-боты"
+        source_quality: "high"
+        source_bucket: "programming_marketplace"
+        enabled: true
+
+  workspace:
+    enabled: true
+    poll_seconds: 600
+    sections:
+      - url: "https://workspace.ru/tenders/crm/"
+        label: "crm-bots-admin"
+        category_hint: "CRM, 1C, ПО, чат-боты, администрирование"
+        source_quality: "high"
+        source_bucket: "structured_tender"
+        enabled: true
+      - url: "https://workspace.ru/tenders/apps-development/"
+        label: "apps-development"
+        category_hint: "Приложения и цифровые сервисы"
+        source_quality: "medium"
+        source_bucket: "structured_tender"
+        enabled: true
+
+  telegram:
+    enabled: true
+    channels:
+      - handle: "@freelance_ru"
+        label: "Фриланс РУ"
+        quality: "high"
+        tags: ["freelance", "jobs"]
+        enabled: true
+      - handle: "@tg_job"
+        label: "TG Job"
+        quality: "high"
+        tags: ["freelance", "jobs"]
+        enabled: true
+      - handle: "@python_jobs"
+        label: "Python Jobs"
+        quality: "high"
+        tags: ["python", "backend"]
+        enabled: true
+      - handle: "@it_jobs_ru"
+        label: "IT Jobs RU"
+        quality: "high"
+        tags: ["it", "jobs"]
+        enabled: true
+      - handle: "@freelansim_ru"
+        label: "Хабр Фриланс"
+        quality: "high"
+        tags: ["freelance", "habr"]
+        enabled: true
+      - handle: "@aiwork_ru"
+        label: "AI Work RU"
+        quality: "high"
+        tags: ["ai", "automation"]
+        enabled: true
+      - handle: "@botjob"
+        label: "Bot Jobs"
+        quality: "medium"
+        tags: ["bots", "telegram"]
+        enabled: true
+      - handle: "@remote_ru"
+        label: "Remote RU"
+        quality: "medium"
+        tags: ["remote", "jobs"]
+        enabled: true
+    keywords:
+      - python
+      - бот
+      - парсинг
+      - парсер
+      - скрипт
+      - автоматизация
+      - api
+      - backend
+      - бэкенд
+      - fastapi
+      - aiogram
+      - интеграция
+      - разработчик
+      - llm
+      - ai
+      - n8n
+
+  freelance_ru:
+    enabled: false  # Tier 2, deferred
+    poll_seconds: 600

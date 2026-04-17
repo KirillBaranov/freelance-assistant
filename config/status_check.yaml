@@ -1,0 +1,43 @@
+status_check:
+  enabled: true
+  interval_seconds: 1800  # run every 30 min
+
+  # Which job statuses to check — no point re-checking won/lost/archived
+  check_statuses:
+    - new
+    - shortlisted
+    - draft_ready
+    - approved
+    - applied
+    - followup_due
+
+  # How many candidates to check per run (rate-limit friendy)
+  batch_size: 30
+
+  platforms:
+    fl_ru:
+      enabled: true
+      http_404_closes: true
+      closed_markers:
+        - "Исполнитель выбран"
+        - "Заказ закрыт"
+        - "Работа закрыта"
+        - "Работа удалена"
+        - "Проект закрыт"
+        - "Закрытый проект"
+
+    workspace:
+      enabled: true
+      http_404_closes: true
+      closed_markers:
+        - "Исполнитель выбран"
+        - "Тендер закрыт"
+        - "Завершён"
+        - "Завершен"
+        - "Архив"
+
+    kwork:
+      enabled: false  # Kwork requires auth to check status — deferred
+
+    telegram:
+      enabled: false  # Messages don't have a "closed" state
