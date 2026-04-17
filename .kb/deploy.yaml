@@ -4,14 +4,14 @@ targets:
   freelance-assistant:
     path: .
     dockerfile: Dockerfile
-    host: vps-1  # замени на hostname/IP своего VPS
+    host: ${SSH_HOST}
     compose: docker-compose.prod.yml
     health: http://localhost:8000/health
 
 infrastructure:
   postgres:
-    host: vps-1
+    host: ${SSH_HOST}
     image: postgres:16-alpine
   redis:
-    host: vps-1
+    host: ${SSH_HOST}
     image: redis:7-alpine
