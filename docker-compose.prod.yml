@@ -11,6 +11,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    pull_policy: if_not_present
     restart: unless-stopped
     environment:
       POSTGRES_USER: fa
@@ -21,6 +22,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    pull_policy: if_not_present
     restart: unless-stopped
     volumes:
       - redisdata:/data
