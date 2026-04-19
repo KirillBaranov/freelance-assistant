@@ -6,7 +6,7 @@ import logging
 import uuid
 
 from freelance_assitant.bot.keyboard import proposal_keyboard
-from freelance_assitant.bot.notify import _escape_html
+from aiogram.utils.markdown import html_decoration as hd
 from freelance_assitant.bot.setup import get_bot
 from freelance_assitant.config import settings
 from freelance_assitant.proposal.generator import generate_proposal
@@ -38,8 +38,8 @@ async def generate_proposal_task(ctx: dict, candidate_id: str) -> bool:
         try:
             bot = get_bot()
             text = (
-                f"\u270d <b>Отклик для:</b> {_escape_html(candidate.title[:80])}\n"
-                f"\n{_escape_html(draft)}"
+                f"\u270d <b>Отклик для:</b> {hd.quote(candidate.title[:80])}\n"
+                f"\n{hd.quote(draft)}"
             )
             kb = proposal_keyboard(str(candidate.id), candidate.source_url)
             await bot.send_message(

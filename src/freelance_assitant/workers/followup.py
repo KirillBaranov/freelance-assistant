@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from freelance_assitant.bot.setup import get_bot
 from freelance_assitant.bot.keyboard import status_keyboard
-from freelance_assitant.bot.notify import _escape_html
+from aiogram.utils.markdown import html_decoration as hd
 from freelance_assitant.config import settings
 from freelance_assitant.domain.enums import JobStatus
 from freelance_assitant.storage.models import JobCandidate
@@ -46,7 +46,7 @@ async def followup_check(ctx: dict) -> int:
                 hours_ago = int((now - candidate.updated_at).total_seconds() / 3600)
                 text = (
                     f"\u23f0 <b>Напоминание</b>\n\n"
-                    f"\ud83d\udccb {_escape_html(candidate.title[:80])}\n"
+                    f"📋 {hd.quote(candidate.title[:80])}\n"
                     f"\ud83d\udd52 Отклик отправлен {hours_ago}ч назад\n"
                     f"\nКлиент ответил?"
                 )
