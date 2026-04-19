@@ -55,4 +55,6 @@ jobs:
             cd ~/freelance-assistant
             docker compose -f docker-compose.prod.yml pull app
             docker compose -f docker-compose.prod.yml up -d
+            echo "Waiting for postgres..."
+            until docker compose -f docker-compose.prod.yml exec -T postgres pg_isready -q; do sleep 2; done
             docker compose -f docker-compose.prod.yml exec -T app fa migrate
