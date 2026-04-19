@@ -8,9 +8,10 @@ Closes (archives) jobs where the platform signals executor selected / deleted / 
 from __future__ import annotations
 
 import logging
-from pathlib import Path
+from freelance_assitant.config import CONFIG_DIR
 
 import yaml
+from pathlib import Path
 from sqlalchemy import select
 
 from freelance_assitant.domain.enums import JobStatus, SourcePlatform
@@ -31,7 +32,7 @@ ACTIVE_STATUSES = {
     JobStatus.FOLLOWUP_DUE,
 }
 
-_CONFIG_PATH = Path(__file__).parents[5] / "config" / "status_check.yaml"
+_CONFIG_PATH = CONFIG_DIR / "status_check.yaml"
 
 
 def _load_config() -> dict:
