@@ -44,6 +44,28 @@ async def score_candidates(ctx: dict) -> int:
             try:
                 result = await engine.score(candidate, profile)
 
+                # Hard block: avoid_keywords → archive immediately, no shortlist
+                avoid = [kw.lower() for kw in profile.get("avoid_keywords", [])]
+                if avoid:
+                    text = (
+                        (candidate.title or "") + " " + (candidate.description or "")
+                    ).lower()
+                    if any(kw in text for kw in avoid):
+                        async with session_factory() as session:
+                            repo = JobCandidateRepo(session)
+                            await repo.upsert_user_job_state(
+                                user_id=user_id,
+                                candidate_id=candidate.id,
+                                score=result.score,
+                                tier=result.tier,
+                                details=result.details,
+                                status=JobStatus.ARCHIVED,
+                            )
+                        logger.debug(
+                            f"[{user.name}] Hard-blocked '{candidate.title[:50]}' (avoid keyword match)"
+                        )
+                        continue
+
                 status = JobStatus.NEW
                 if result.shortlist and not result.details.get("hard_reject"):
                     status = JobStatus.SHORTLISTED
