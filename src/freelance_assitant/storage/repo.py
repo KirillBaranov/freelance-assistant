@@ -143,6 +143,13 @@ class JobCandidateRepo:
         details: dict[str, Any],
         status: JobStatus = JobStatus.NEW,
     ) -> None:
+        # Inherit notified_at from job_candidates so already-notified leads
+        # don't get re-sent when a new user_job_states row is created.
+        notified_subq = (
+            select(JobCandidate.notified_at)
+            .where(JobCandidate.id == candidate_id)
+            .scalar_subquery()
+        )
         stmt = (
             pg_insert(UserJobState)
             .values(
@@ -152,6 +159,7 @@ class JobCandidateRepo:
                 tier=tier.value,
                 score_details=details,
                 status=status,
+                notified_at=notified_subq,
             )
             .on_conflict_do_update(
                 index_elements=["user_id", "candidate_id"],
