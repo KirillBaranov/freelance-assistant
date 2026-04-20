@@ -160,6 +160,36 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
+class UserProfile(BaseModel):
+    primary_skills: list[str] = Field(default_factory=list)
+    secondary_skills: list[str] = Field(default_factory=list)
+    preferred_categories: list[str] = Field(default_factory=list)
+    avoid_keywords: list[str] = Field(default_factory=list)
+    min_budget_rub: int = 2000
+    preferred_max_duration_days: int = 14
+    sales_style: str = "short_confident"
+    languages: list[str] = Field(default_factory=lambda: ["ru"])
+
+
+class UserConfig(BaseModel):
+    telegram_id: int
+    name: str = "User"
+    profile: UserProfile = Field(default_factory=UserProfile)
+
+
+@lru_cache(maxsize=1)
+def load_users() -> list[UserConfig]:
+    users_dir = CONFIG_DIR / "users"
+    if not users_dir.exists():
+        return []
+    users = []
+    for path in sorted(users_dir.glob("*.yaml")):
+        with open(path) as f:
+            data = yaml.safe_load(f) or {}
+        users.append(UserConfig.model_validate(data))
+    return users
+
+
 @lru_cache(maxsize=1)
 def load_sources_config() -> SourcesConfig:
     config_path = CONFIG_DIR / "sources.yaml"

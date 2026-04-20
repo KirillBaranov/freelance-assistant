@@ -12,10 +12,10 @@ from sqlalchemy import func, select
 
 from freelance_assitant.bot.keyboard import leads_nav_keyboard, pipeline_lead_keyboard
 from freelance_assitant.bot.notify import format_lead_message
-from freelance_assitant.config import settings
+from freelance_assitant.config import load_users, settings
 from freelance_assitant.domain.enums import JobStatus
 from freelance_assitant.storage.database import async_session_factory
-from freelance_assitant.storage.models import JobCandidate
+from freelance_assitant.storage.models import JobCandidate, UserJobState
 from freelance_assitant.storage.repo import JobCandidateRepo
 
 logger = logging.getLogger("fa.bot.commands")
@@ -40,13 +40,27 @@ STATUS_EMOJI = {
 }
 
 
-def _owner_only(message: Message) -> bool:
-    return bool(message.from_user and message.from_user.id == settings.telegram_owner_id)
+def _get_known_user(telegram_id: int):
+    """Return UserConfig if telegram_id is registered, else None."""
+    users = load_users()
+    if users:
+        for u in users:
+            if u.telegram_id == telegram_id:
+                return u
+        return None
+    # Legacy: single-owner mode
+    if telegram_id == settings.telegram_owner_id:
+        return True
+    return None
+
+
+def _is_known(message: Message) -> bool:
+    return bool(message.from_user and _get_known_user(message.from_user.id))
 
 
 @router.message(Command("start"))
 async def cmd_start(message: Message) -> None:
-    if not _owner_only(message):
+    if not _is_known(message):
         await message.answer("Access denied.")
         return
     await message.answer(
@@ -63,11 +77,13 @@ async def cmd_start(message: Message) -> None:
 PAGE_SIZE = 5
 
 
-async def _send_leads_page(target: Message, offset: int) -> None:
+async def _send_leads_page(target: Message, user_id: str, offset: int) -> None:
     async with async_session_factory() as session:
         repo = JobCandidateRepo(session)
-        total = await repo.count_by_status(JobStatus.SHORTLISTED)
-        leads = await repo.get_by_status(JobStatus.SHORTLISTED, limit=PAGE_SIZE, offset=offset)
+        leads = await repo.get_user_pipeline(
+            user_id, [JobStatus.SHORTLISTED], limit=PAGE_SIZE
+        )
+        total = await repo.count_user_by_status(user_id, JobStatus.SHORTLISTED)
 
     if not leads:
         await target.answer("Нет лидов в shortlist.")
@@ -83,9 +99,12 @@ async def _send_leads_page(target: Message, offset: int) -> None:
     await target.answer(summary, reply_markup=nav)
 
 
-@router.message(Command("leads"), _owner_only)
+@router.message(Command("leads"))
 async def cmd_leads(message: Message) -> None:
-    await _send_leads_page(message, offset=0)
+    if not _is_known(message):
+        return
+    user_id = str(message.from_user.id)
+    await _send_leads_page(message, user_id, offset=0)
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith("leads_page:"))
@@ -95,7 +114,8 @@ async def handle_leads_page(callback: CallbackQuery) -> None:
         offset = int(callback.data.split(":")[1])
     except (IndexError, ValueError):
         return
-    await _send_leads_page(callback.message, offset=offset)
+    user_id = str(callback.from_user.id)
+    await _send_leads_page(callback.message, user_id, offset=offset)
 
 
 @router.callback_query(lambda c: c.data == "noop")
@@ -103,18 +123,15 @@ async def handle_noop(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(Command("pipeline"), _owner_only)
+@router.message(Command("pipeline"))
 async def cmd_pipeline(message: Message) -> None:
-    """Show active pipeline grouped by status."""
+    if not _is_known(message):
+        return
+    user_id = str(message.from_user.id)
+
     async with async_session_factory() as session:
-        stmt = (
-            select(JobCandidate)
-            .where(JobCandidate.status.in_(ACTIVE_STATUSES))
-            .order_by(JobCandidate.updated_at.desc())
-            .limit(30)
-        )
-        result = await session.execute(stmt)
-        candidates = result.scalars().all()
+        repo = JobCandidateRepo(session)
+        candidates = await repo.get_user_pipeline(user_id, ACTIVE_STATUSES, limit=30)
 
     if not candidates:
         await message.answer("Pipeline пуст.")
@@ -142,33 +159,40 @@ async def cmd_pipeline(message: Message) -> None:
             lines.append(f"  … ещё {len(items) - 5}")
         lines.append("")
 
-    # Summary buttons for shortlisted
     shortlisted = by_status.get(JobStatus.SHORTLISTED, [])
     kb = None
     if shortlisted:
         kb = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text=f"👀 Разобрать {len(shortlisted)} лидов", callback_data="open_leads"),
+            InlineKeyboardButton(
+                text=f"👀 Разобрать {len(shortlisted)} лидов",
+                callback_data="open_leads",
+            ),
         ]])
 
     await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=kb)
 
 
-@router.message(Command("stats"), _owner_only)
+@router.message(Command("stats"))
 async def cmd_stats(message: Message) -> None:
+    if not _is_known(message):
+        return
+    user_id = str(message.from_user.id)
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=7)
 
     async with async_session_factory() as session:
+        repo = JobCandidateRepo(session)
+        shortlisted = await repo.count_user_by_status(user_id, JobStatus.SHORTLISTED)
+        applied = await repo.count_user_by_status(user_id, JobStatus.APPLIED)
+
+        # Total ingested today (global, not per-user)
         total_today = await _count(session, JobCandidate.created_at >= today_start)
-        a_today = await _count(session, JobCandidate.created_at >= today_start, JobCandidate.tier == "A")
-        b_today = await _count(session, JobCandidate.created_at >= today_start, JobCandidate.tier == "B")
-        applied = await _count(session, JobCandidate.status == JobStatus.APPLIED)
-        won_today = await _count(
-            session, JobCandidate.status == JobStatus.WON, JobCandidate.updated_at >= today_start
-        )
+        # Per-user A/B counts today
+        a_today = await _count_ujs(session, user_id, UserJobState.tier == "A")
+        b_today = await _count_ujs(session, user_id, UserJobState.tier == "B")
         total_week = await _count(session, JobCandidate.created_at >= week_start)
-        shortlisted = await _count(session, JobCandidate.status == JobStatus.SHORTLISTED)
+        won_today = await repo.count_user_by_status(user_id, JobStatus.WON)
 
     await message.answer(
         f"📊 <b>Статистика</b>\n\n"
@@ -183,15 +207,23 @@ async def cmd_stats(message: Message) -> None:
     )
 
 
-@router.message(Command("today"), _owner_only)
+@router.message(Command("today"))
 async def cmd_today(message: Message) -> None:
+    if not _is_known(message):
+        return
+    user_id = str(message.from_user.id)
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     async with async_session_factory() as session:
-        stmt = select(JobCandidate).where(
-            JobCandidate.status == JobStatus.WON,
-            JobCandidate.updated_at >= today_start,
+        stmt = (
+            select(JobCandidate)
+            .join(UserJobState, UserJobState.candidate_id == JobCandidate.id)
+            .where(
+                UserJobState.user_id == user_id,
+                UserJobState.status == JobStatus.WON,
+                UserJobState.updated_at >= today_start,
+            )
         )
         result = await session.execute(stmt)
         won = result.scalars().all()
@@ -216,5 +248,15 @@ async def cmd_today(message: Message) -> None:
 
 async def _count(session, *filters) -> int:
     stmt = select(func.count()).select_from(JobCandidate).where(*filters)
+    result = await session.execute(stmt)
+    return result.scalar() or 0
+
+
+async def _count_ujs(session, user_id: str, *filters) -> int:
+    stmt = (
+        select(func.count())
+        .select_from(UserJobState)
+        .where(UserJobState.user_id == user_id, *filters)
+    )
     result = await session.execute(stmt)
     return result.scalar() or 0

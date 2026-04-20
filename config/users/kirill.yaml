@@ -1,0 +1,87 @@
+telegram_id: 840797533
+name: "Kirill"
+
+profile:
+  primary_skills:
+    - python
+    - fastapi
+    - postgresql
+    - telegram bot
+    - telegram mini app
+    - aiogram
+    - автоматизация
+    - api
+    - asyncio
+    - redis
+    - llm
+    - rag
+    - langchain
+    - openai
+    - ai
+    - n8n
+    - интеграция
+    - парсинг
+    - scraping
+    - go
+    - golang
+    - react
+    - next.js
+    - nextjs
+    - node.js
+    - typescript
+    - docker
+    - бот
+
+  secondary_skills:
+    - sqlalchemy
+    - linux
+    - git
+    - ci/cd
+    - celery
+    - django
+    - httpx
+
+  preferred_categories:
+    - боты
+    - автоматизация
+    - интеграции
+    - llm
+    - ai
+    - бэкенд
+    - api
+    - mini app
+    - парсеры
+    - скрипты
+    - fullstack
+
+  avoid_keywords:
+    - 1С
+    - битрикс
+    - bitrix
+    - wordpress
+    - php
+    - ios
+    - android
+    - swift
+    - kotlin
+    - flutter
+    - unity
+    - c#
+    - java
+    - верстка
+    - дизайн
+    - figma
+    - photoshop
+    - seo
+    - контент
+    - копирайт
+    - smm
+    - таргет
+    - реклама
+
+  min_budget_rub: 3000
+  preferred_max_duration_days: 14
+  sales_style: short_confident
+  languages:
+    - ru
+    - en

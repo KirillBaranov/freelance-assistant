@@ -73,8 +73,13 @@ class ScoringEngine:
         self._llm_scorer = LLMAdvisoryScorer()
         self._decision_enricher = DecisionEnricher()
 
-    async def score(self, candidate: JobCandidateRead) -> ScoringResult:
-        profile = load_profile()
+    async def score(
+        self,
+        candidate: JobCandidateRead,
+        profile: dict[str, Any] | None = None,
+    ) -> ScoringResult:
+        if profile is None:
+            profile = load_profile()
         details: dict[str, float] = {}
         reasons: list[str] = []
 

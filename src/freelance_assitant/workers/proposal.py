@@ -8,14 +8,14 @@ import uuid
 from freelance_assitant.bot.keyboard import proposal_keyboard
 from aiogram.utils.markdown import html_decoration as hd
 from freelance_assitant.bot.setup import get_bot
-from freelance_assitant.config import settings
+from freelance_assitant.config import load_users, settings
 from freelance_assitant.proposal.generator import generate_proposal
 from freelance_assitant.storage.repo import JobCandidateRepo
 
 logger = logging.getLogger("fa.workers.proposal")
 
 
-async def generate_proposal_task(ctx: dict, candidate_id: str) -> bool:
+async def generate_proposal_task(ctx: dict, candidate_id: str, user_telegram_id: int | None = None) -> bool:
     """arq task: generate a proposal draft and send to Telegram."""
     session_factory = ctx["session_factory"]
 
@@ -33,8 +33,15 @@ async def generate_proposal_task(ctx: dict, candidate_id: str) -> bool:
             logger.exception(f"Proposal generation failed for {candidate_id}")
             return False
 
+    # Determine target chat_id
+    target_id = user_telegram_id or settings.telegram_owner_id
+    if not target_id:
+        users = load_users()
+        if users:
+            target_id = users[0].telegram_id
+
     # Send draft to Telegram
-    if settings.telegram_bot_token and settings.telegram_owner_id:
+    if settings.telegram_bot_token and target_id:
         try:
             bot = get_bot()
             text = (
@@ -43,7 +50,7 @@ async def generate_proposal_task(ctx: dict, candidate_id: str) -> bool:
             )
             kb = proposal_keyboard(str(candidate.id), candidate.source_url)
             await bot.send_message(
-                chat_id=settings.telegram_owner_id,
+                chat_id=target_id,
                 text=text,
                 reply_markup=kb,
                 parse_mode="HTML",

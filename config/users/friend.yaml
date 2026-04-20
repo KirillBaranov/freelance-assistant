@@ -1,0 +1,66 @@
+telegram_id: 1940407582
+name: "Друг"
+
+profile:
+  primary_skills:
+    - дизайн
+    - figma
+    - лендинг
+    - landing page
+    - сайт
+    - визитка
+    - баннер
+    - ui
+    - ux
+    - веб-дизайн
+    - веб дизайн
+    - графический дизайн
+    - брендинг
+    - логотип
+    - презентация
+    - tilda
+    - тильда
+    - canva
+
+  secondary_skills:
+    - photoshop
+    - illustrator
+    - after effects
+    - motion
+
+  preferred_categories:
+    - дизайн
+    - веб-дизайн
+    - лендинги
+    - сайты
+    - визитки
+    - баннеры
+    - брендинг
+    - презентации
+
+  avoid_keywords:
+    - python
+    - backend
+    - api
+    - парсинг
+    - бот
+    - telegram bot
+    - 1С
+    - битрикс
+    - ios
+    - android
+    - flutter
+    - unity
+    - c#
+    - java
+    - golang
+    - rust
+    - программирование
+    - разработка
+    - база данных
+
+  min_budget_rub: 2000
+  preferred_max_duration_days: 7
+  sales_style: short_confident
+  languages:
+    - ru
