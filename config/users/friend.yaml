@@ -37,7 +37,7 @@ profile:
     - python
     - backend
     - api
-    - парсинг
+    - парс
     - бот
     - telegram
     - 1С
