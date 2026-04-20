@@ -28,6 +28,18 @@ sources:
         source_quality: "medium"
         source_bucket: "programming_feed"
         enabled: true
+      - url: "https://www.fl.ru/rss/?category=3"
+        label: "design"
+        category_hint: "Дизайн"
+        source_quality: "high"
+        source_bucket: "design_feed"
+        enabled: true
+      - url: "https://www.fl.ru/rss/?category=8"
+        label: "web-design"
+        category_hint: "Веб-дизайн"
+        source_quality: "high"
+        source_bucket: "design_feed"
+        enabled: true
       - url: "https://www.fl.ru/rss/all.xml"
         label: "all"
         category_hint: "Общий поток"
@@ -48,6 +60,16 @@ sources:
         label: "Боты и чат-боты"
         source_quality: "high"
         source_bucket: "programming_marketplace"
+        enabled: true
+      - id: 15
+        label: "Дизайн"
+        source_quality: "high"
+        source_bucket: "design_marketplace"
+        enabled: true
+      - id: 16
+        label: "Веб-дизайн и UI/UX"
+        source_quality: "high"
+        source_bucket: "design_marketplace"
         enabled: true
 
   workspace:
