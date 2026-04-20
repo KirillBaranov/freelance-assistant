@@ -28,15 +28,9 @@ sources:
         source_quality: "medium"
         source_bucket: "programming_feed"
         enabled: true
-      - url: "https://www.fl.ru/rss/?category=3"
-        label: "design"
-        category_hint: "Дизайн"
-        source_quality: "high"
-        source_bucket: "design_feed"
-        enabled: true
-      - url: "https://www.fl.ru/rss/?category=8"
-        label: "web-design"
-        category_hint: "Веб-дизайн"
+      - url: "https://www.fl.ru/rss/?category=2"
+        label: "websites"
+        category_hint: "Сайты и лендинги"
         source_quality: "high"
         source_bucket: "design_feed"
         enabled: true
