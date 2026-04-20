@@ -169,6 +169,8 @@ class UserProfile(BaseModel):
     preferred_max_duration_days: int = 14
     sales_style: str = "short_confident"
     languages: list[str] = Field(default_factory=lambda: ["ru"])
+    a_threshold: float | None = None          # override global A-tier threshold
+    shortlist_threshold: float | None = None  # override global shortlist threshold
 
 
 class UserConfig(BaseModel):

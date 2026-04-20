@@ -80,6 +80,10 @@ class ScoringEngine:
     ) -> ScoringResult:
         if profile is None:
             profile = load_profile()
+
+        # Per-user threshold overrides
+        a_threshold = float(profile.get("a_threshold") or self.a_threshold)
+        shortlist_score_threshold = float(profile.get("shortlist_threshold") or self.shortlist_score_threshold)
         details: dict[str, float] = {}
         reasons: list[str] = []
 
@@ -121,8 +125,8 @@ class ScoringEngine:
                 logger.debug("LLM scoring skipped (error)")
 
         composite = round(max(0.0, min(1.0, composite)), 3)
-        tier = self._classify(composite)
-        shortlist = self._should_shortlist(composite, tier, details)
+        tier = self._classify(composite, a_threshold=a_threshold)
+        shortlist = self._should_shortlist(composite, tier, details, shortlist_score_threshold=shortlist_score_threshold)
         details["shortlist_fit"] = shortlist
         details["hard_reject"] = self._is_hard_reject(details)
         if shortlist and not details["hard_reject"]:
@@ -169,19 +173,21 @@ class ScoringEngine:
                 score += weight * value
         return score
 
-    def _classify(self, score: float) -> LeadTier:
-        if score >= self.a_threshold:
+    def _classify(self, score: float, a_threshold: float | None = None) -> LeadTier:
+        a = a_threshold if a_threshold is not None else self.a_threshold
+        if score >= a:
             return LeadTier.A
         if score >= self.b_threshold:
             return LeadTier.B
         return LeadTier.C
 
-    def _should_shortlist(self, score: float, tier: LeadTier, details: dict[str, Any]) -> bool:
+    def _should_shortlist(self, score: float, tier: LeadTier, details: dict[str, Any], shortlist_score_threshold: float | None = None) -> bool:
+        threshold = shortlist_score_threshold if shortlist_score_threshold is not None else self.shortlist_score_threshold
         if self._is_hard_reject(details):
             return False
         if tier == LeadTier.A:
             return True
-        if score < self.shortlist_score_threshold:
+        if score < threshold:
             return False
         llm_clarity = float(details.get("llm_scope_clarity", 0.0) or 0.0)
         llm_grey_risk = float(details.get("llm_grey_risk", 0.0) or 0.0)

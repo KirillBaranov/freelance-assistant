@@ -131,22 +131,32 @@ class SourceFitScorer(BaseScorer):
             "low": 0.35,
         }.get(quality, 0.55)
 
-        if bucket in {"programming_feed", "programming_marketplace", "telegram_channel"}:
-            score += 0.1
-        elif bucket == "broad_feed":
-            score -= 0.1
-
-        programming_hints = (
-            "программ",
-            "бот",
-            "python",
-            "backend",
-            "api",
-            "автоматизац",
-            "парс",
+        # Detect preferred buckets from profile
+        preferred_categories = [c.lower() for c in profile.get("preferred_categories", [])]
+        is_design_profile = any(
+            kw in preferred_categories for kw in ("дизайн", "веб-дизайн", "лендинги", "визитки")
         )
-        if any(hint in text for hint in programming_hints):
-            score += 0.05
+
+        if is_design_profile:
+            if bucket in {"design_feed", "design_marketplace"}:
+                score += 0.1
+            elif bucket in {"programming_feed", "programming_marketplace"}:
+                score -= 0.05
+            elif bucket == "broad_feed":
+                score -= 0.1
+
+            design_hints = ("дизайн", "figma", "лендинг", "визитк", "баннер", "ui", "ux", "логотип", "tilda", "тильда")
+            if any(hint in text for hint in design_hints):
+                score += 0.05
+        else:
+            if bucket in {"programming_feed", "programming_marketplace", "telegram_channel"}:
+                score += 0.1
+            elif bucket == "broad_feed":
+                score -= 0.1
+
+            programming_hints = ("программ", "бот", "python", "backend", "api", "автоматизац", "парс")
+            if any(hint in text for hint in programming_hints):
+                score += 0.05
 
         return max(0.0, min(1.0, score))
 

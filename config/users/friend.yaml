@@ -64,3 +64,5 @@ profile:
   sales_style: short_confident
   languages:
     - ru
+  a_threshold: 0.55        # lower than default 0.70 — design leads score differently
+  shortlist_threshold: 0.48
